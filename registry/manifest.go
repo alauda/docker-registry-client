@@ -51,7 +51,7 @@ func (registry *Registry) OCIManifestV1(repository, reference string) (*ociv1.Ma
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", schema2.MediaTypeManifest)
+	req.Header.Set("Accept", ociv1.MediaTypeImageManifest)
 	resp, err := registry.Client.Do(req)
 	if err != nil {
 		return nil, err
