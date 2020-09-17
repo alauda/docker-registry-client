@@ -16,7 +16,8 @@ func (registry *Registry) Repositories() ([]string, error) {
 	var response repositoriesResponse
 	for {
 		if !strings.HasPrefix(url, "http") {
-			url = registry.url(neturl.QueryUnescape(url))
+			args, _ := neturl.QueryUnescape(url)
+			url = registry.url(args)
 		}
 		registry.Logf("registry.repositories url=%s", url)
 		url, err = registry.getPaginatedJSON(url, &response)
