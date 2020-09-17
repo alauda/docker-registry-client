@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	digest "github.com/opencontainers/go-digest"
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func (registry *Registry) Manifest(repository, reference string) (*schema1.SignedManifest, error) {
@@ -39,6 +41,34 @@ func (registry *Registry) Manifest(repository, reference string) (*schema1.Signe
 	}
 
 	return signedManifest, nil
+}
+
+func (registry *Registry) OCIManifestV1(repository, reference string) (*ociv1.Manifest, error) {
+	url := registry.url("/v2/%s/manifests/%s", repository, reference)
+	registry.Logf("registry.manifest.get url=%s repository=%s reference=%s", url, repository, reference)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", schema2.MediaTypeManifest)
+	resp, err := registry.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	deserialized := &ociv1.Manifest{}
+	err = json.Unmarshal(body, deserialized)
+	if err != nil {
+		return nil, err
+	}
+	return deserialized, nil
 }
 
 func (registry *Registry) ManifestV2(repository, reference string) (*schema2.DeserializedManifest, error) {
